@@ -44,6 +44,7 @@
 
 #include "net/NetUtils.h"
 #include "ui/InstanceWindow.h"
+#include "ui/dialogs/AuthlibInjectorLoginDialog.h"
 #include "ui/dialogs/CustomMessageBox.h"
 #include "ui/dialogs/MSALoginDialog.h"
 #include "ui/dialogs/ProfileSelectDialog.h"
@@ -347,7 +348,12 @@ bool LaunchController::reauthenticateAccount(const MinecraftAccountPtr& account,
     if (button == QMessageBox::StandardButton::Yes) {
         auto* accounts = APPLICATION->accounts();
         const bool isDefault = accounts->defaultAccount() == account;
-        if (account->accountType() == AccountType::MSA) {
+        if (account->accountType() == AccountType::AuthlibInjector) {
+            if (!account->isActive() && AuthlibInjectorLoginDialog::relogin(m_parentWidget, account)) {
+                return true;
+            }
+            return false;
+        } else if (account->accountType() == AccountType::MSA) {
             auto newAccount = MSALoginDialog::newAccount(m_parentWidget);
 
             if (newAccount != nullptr) {

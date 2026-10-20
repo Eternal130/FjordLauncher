@@ -38,6 +38,10 @@ class AuthlibInjectorLoginDialog : public QDialog {
 
     static MinecraftAccountPtr newAccount(QWidget* parent, QString message);
 
+    //! Re-authenticates an existing authlib-injector account whose token expired.
+    //! Only call this when the account is not currently running a task. Returns true on success.
+    static bool relogin(QWidget* parent, MinecraftAccountPtr account);
+
    private:
     explicit AuthlibInjectorLoginDialog(QWidget* parent = 0);
 
@@ -64,6 +68,7 @@ class AuthlibInjectorLoginDialog : public QDialog {
     QUrl extractAuthlibInjectorUrl(const QMimeData* mimeData);
     Ui::AuthlibInjectorLoginDialog* ui;
     MinecraftAccountPtr m_account;
+    bool m_reloginMode = false;
     Task::Ptr m_loginTask;
     Task::Ptr m_apiLocationTask;
     GetAuthlibInjectorApiLocation::Ptr m_apiLocationRequest;
