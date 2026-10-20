@@ -52,6 +52,7 @@
 
 #include "minecraft/auth/AccountData.h"
 #include "minecraft/auth/AuthFlow.h"
+#include "minecraft/auth/PasswordStore.h"
 
 MinecraftAccount::MinecraftAccount(QObject* parent) : QObject(parent)
 {
@@ -286,6 +287,21 @@ void MinecraftAccount::fillSession(AuthSessionPtr session)
     session->services_server_url = data.servicesServerUrl();
     session->uses_custom_api_servers = data.usesCustomApiServers();
     session->authlib_injector_metadata = data.authlibInjectorMetadata;
+}
+
+void MinecraftAccount::savePassword(const QString& password) const
+{
+    PasswordStore::store(QStringLiteral("authlib/%1").arg(internalId()), password);
+}
+
+QString MinecraftAccount::loadPassword() const
+{
+    return PasswordStore::load(QStringLiteral("authlib/%1").arg(internalId()));
+}
+
+void MinecraftAccount::clearPassword() const
+{
+    PasswordStore::remove(QStringLiteral("authlib/%1").arg(internalId()));
 }
 
 void MinecraftAccount::decrementUses()

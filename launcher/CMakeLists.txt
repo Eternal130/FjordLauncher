@@ -231,6 +231,8 @@ set(MINECRAFT_SOURCES
     minecraft/auth/AuthSession.cpp
     minecraft/auth/AuthSession.h
     minecraft/auth/AuthStep.h
+    minecraft/auth/PasswordStore.cpp
+    minecraft/auth/PasswordStore.h
     minecraft/auth/MinecraftAccount.cpp
     minecraft/auth/MinecraftAccount.h
     minecraft/auth/Parsers.cpp

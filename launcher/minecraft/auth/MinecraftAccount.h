@@ -192,6 +192,12 @@ class MinecraftAccount : public QObject, public Usable {
 
     QString lastError() const { return data.lastError(); }
 
+    //! Local, obfuscated storage for this account's password (authlib-injector only), used for
+    //! automatic recovery once the token has fully expired. See PasswordStore for the caveats.
+    void savePassword(const QString& password) const;
+    QString loadPassword() const;
+    void clearPassword() const;
+
    signals:
     /**
      * This signal is emitted when the account changes

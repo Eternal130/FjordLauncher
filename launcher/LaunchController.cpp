@@ -342,6 +342,28 @@ void LaunchController::login()
 
 bool LaunchController::reauthenticateAccount(const MinecraftAccountPtr& account, const QString& reason)
 {
+    if (account->accountType() == AccountType::AuthlibInjector && !account->isActive()) {
+        // Yggdrasil has no refresh tokens, so the account password is the only way to recover
+        // from a fully expired token. Try the remembered password first, without asking the user.
+        const QString storedPassword = account->loadPassword();
+        if (!storedPassword.isEmpty()) {
+            auto task = account->login(false, storedPassword);
+            bool loginAborted = false;
+            connect(task.get(), &Task::aborted, [&loginAborted] { loginAborted = true; });
+            ProgressDialog progDialog(m_parentWidget);
+            progDialog.setSkipButton(true, tr("Abort"));
+            progDialog.execWithTask(task.get());
+            if (account->accountState() == AccountState::Online) {
+                return true;
+            }
+            if (loginAborted) {
+                return false;
+            }
+            // The remembered password was rejected: forget it and ask the user below.
+            account->clearPassword();
+        }
+    }
+
     auto button = QMessageBox::warning(
         m_parentWidget, tr("Account refresh failed"), tr("%1. Do you want to reauthenticate this account?").arg(reason),
         QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No, QMessageBox::StandardButton::Yes);

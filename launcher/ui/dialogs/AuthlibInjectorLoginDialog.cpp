@@ -201,6 +201,10 @@ void AuthlibInjectorLoginDialog::onApiLocationTaskSucceeded()
 
 void AuthlibInjectorLoginDialog::onTaskSucceeded()
 {
+    if (m_account->accountType() == AccountType::AuthlibInjector) {
+        // Remember the password so the account can be recovered automatically next time its token expires.
+        m_account->savePassword(ui->passTextBox->text());
+    }
     QDialog::accept();
 }
 

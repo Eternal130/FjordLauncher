@@ -216,8 +216,23 @@ void AccountListPage::on_actionRefresh_triggered()
         MinecraftAccountPtr account = selected.data(AccountList::PointerRole).value<MinecraftAccountPtr>();
         if (account->accountType() == AccountType::AuthlibInjector && !account->isActive()) {
             if (account->accessToken().isEmpty()) {
-                // The token was wiped after it fully expired. Yggdrasil has no refresh tokens, so
-                // the only way to recover is a full login with the account password.
+                // The token was wiped after it fully expired. Yggdrasil has no refresh tokens, so the
+                // only way to recover is a full login with the account password. Try the remembered
+                // password first, then fall back to asking the user.
+                const QString storedPassword = account->loadPassword();
+                if (!storedPassword.isEmpty()) {
+                    auto task = account->login(false, storedPassword);
+                    bool loginAborted = false;
+                    connect(task.get(), &Task::aborted, [&loginAborted] { loginAborted = true; });
+                    ProgressDialog progDialog(this);
+                    progDialog.setSkipButton(true, tr("Abort"));
+                    progDialog.execWithTask(task.get());
+                    if (account->accountState() == AccountState::Online || loginAborted) {
+                        return;
+                    }
+                    // The remembered password was rejected: forget it and ask the user.
+                    account->clearPassword();
+                }
                 AuthlibInjectorLoginDialog::relogin(this, account);
                 return;
             }
