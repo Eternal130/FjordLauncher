@@ -49,6 +49,7 @@
 #include <QtMath>
 
 #include "VisualGroup.h"
+#include "ui/dialogs/AuthlibInjectorLoginDialog.h"
 #include "ui/themes/CatPainter.h"
 #include "ui/themes/ThemeManager.h"
 
@@ -792,8 +793,13 @@ QList<std::pair<QRect, QModelIndex>> InstanceView::draggablePaintPairs(const QMo
     return ret;
 }
 
-bool InstanceView::isDragEventAccepted([[maybe_unused]] QDropEvent* event)
+bool InstanceView::isDragEventAccepted(QDropEvent* event)
 {
+    // Never claim authlib-injector server link drags: InstanceView accepts every drag it
+    // sees, which would swallow them before they can bubble up to MainWindow's handler.
+    if (AuthlibInjectorLoginDialog::extractAuthlibInjectorUrl(event->mimeData()).isValid()) {
+        return false;
+    }
     return true;
 }
 
