@@ -903,6 +903,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
 
         m_settings->registerSetting("FlameKeyShouldBeFetchedOnStartup", true);
         m_settings->registerSetting("FallbackMRBlockedMods", true);
+        m_settings->registerSetting("BMCLAPIRedirectEnabled", true);
         m_settings->registerSetting("ModrinthToken", "");
         m_settings->registerSetting("UserAgentOverride", "");
 

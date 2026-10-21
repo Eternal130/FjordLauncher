@@ -135,6 +135,8 @@ set(NET_SOURCES
     net/HttpMetaCache.h
     net/MetaCacheSink.cpp
     net/MetaCacheSink.h
+    net/MirrorRedirector.cpp
+    net/MirrorRedirector.h
     net/Logging.h
     net/Logging.cpp
     net/NetJob.cpp

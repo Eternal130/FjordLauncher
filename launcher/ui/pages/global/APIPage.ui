@@ -158,6 +158,16 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="bmclapiRedirect">
+            <property name="toolTip">
+             <string>Redirects downloads from Mojang and MinecraftForge servers to bmclapi2.bangbang93.com. Faster in China; can be toggled off if the mirror misbehaves.</string>
+            </property>
+            <property name="text">
+             <string>Use the BMCLAPI mirror for Minecraft downloads</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

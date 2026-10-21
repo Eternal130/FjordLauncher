@@ -142,6 +142,8 @@ void APIPage::loadSettings()
         ui->FallbackMRBlockedMods->setChecked(fallbackMRBlockedMods);
     }
 
+    ui->bmclapiRedirect->setChecked(s->get("BMCLAPIRedirectEnabled").toBool());
+
     QString msaClientID = s->get("MSAClientIDOverride").toString();
     ui->msaClientID->setText(msaClientID);
     QString metaURL = s->get("MetaURLOverride").toString();
@@ -196,6 +198,7 @@ void APIPage::applySettings()
     upgradeToHTTPS(fmlLibsURL);
 
     s->set("FallbackMRBlockedMods", ui->FallbackMRBlockedMods->checkState());
+    s->set("BMCLAPIRedirectEnabled", ui->bmclapiRedirect->isChecked());
     s->set("MetaURLOverride", metaURL.toString());
     s->set("ResourceURLOverride", resourceURL.toString());
     s->set("LegacyFMLLibsURLOverride", fmlLibsURL.toString());
