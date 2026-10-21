@@ -49,6 +49,7 @@
 
 #if defined(LAUNCHER_APPLICATION)
 #include "Application.h"
+#include "net/MirrorRedirector.h"
 #include "settings/SettingsObject.h"
 #endif
 #include "BuildConfig.h"
@@ -78,6 +79,16 @@ void NetRequest::executeTask()
         emit finished();
         return;
     }
+
+#if defined(LAUNCHER_APPLICATION)
+    {
+        const bool mirrorEnabled = APPLICATION->settings()->get("BMCLAPIRedirectEnabled").toBool();
+        const QUrl mirrored = MirrorRedirector::redirect(m_url, mirrorEnabled);
+        if (mirrored != m_url) {
+            m_url = mirrored;
+        }
+    }
+#endif
 
     QNetworkRequest request(m_url);
     m_state = m_sink->init(request);
