@@ -52,6 +52,8 @@
 class LaunchController;
 class QToolButton;
 class InstanceProxyModel;
+class QDragEnterEvent;
+class QDropEvent;
 class LabeledToolButton;
 class QLabel;
 class MinecraftLauncher;
@@ -74,6 +76,8 @@ class MainWindow : public QMainWindow {
     bool eventFilter(QObject* obj, QEvent* ev) override;
     void closeEvent(QCloseEvent* event) override;
     void changeEvent(QEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
 
     void checkInstancePathForProblems();
 

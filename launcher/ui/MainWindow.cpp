@@ -94,6 +94,7 @@
 #include "ui/GuiUtil.h"
 #include "ui/ViewLogWindow.h"
 #include "ui/dialogs/AboutDialog.h"
+#include "ui/dialogs/AuthlibInjectorLoginDialog.h"
 #include "ui/dialogs/CopyInstanceDialog.h"
 #include "ui/dialogs/CreateShortcutDialog.h"
 #include "ui/dialogs/CustomMessageBox.h"
@@ -110,6 +111,7 @@
 #include "ui/themes/ThemeManager.h"
 #include "ui/widgets/LabeledToolButton.h"
 
+#include "minecraft/auth/AccountList.h"
 #include "minecraft/PackProfile.h"
 #include "minecraft/VersionFile.h"
 #include "minecraft/WorldList.h"
@@ -143,12 +145,58 @@ QString profileInUseFilter(const QString& profile, bool used)
 }
 }  // namespace
 
+void MainWindow::dragEnterEvent(QDragEnterEvent* event)
+{
+    if (AuthlibInjectorLoginDialog::extractAuthlibInjectorUrl(event->mimeData()).isValid()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent* event)
+{
+    const QUrl url = AuthlibInjectorLoginDialog::extractAuthlibInjectorUrl(event->mimeData());
+    if (!url.isValid()) {
+        return;
+    }
+    event->acceptProposedAction();
+
+    // Same guard as the "add authlib-injector account" toolbar action on the accounts page.
+    auto accounts = APPLICATION->accounts();
+    if (!accounts->anyAccountIsValid()) {
+        CustomMessageBox::selectable(this, tr("Error"),
+                                     tr("You must add a Microsoft account that owns Minecraft before you can add an account on a "
+                                        "custom authentication server."
+                                        "<br><br>"
+                                        "If you have lost your account you can contact Microsoft for support."))
+            ->exec();
+        return;
+    }
+
+    MinecraftAccountPtr account = AuthlibInjectorLoginDialog::newAccount(
+        this,
+        tr("Please enter your username (sometimes an email address) and password."
+           "<br>"
+           "See <a href=\"https://github.com/unmojang/FjordLauncher/blob/develop/doc/alternative-auth-servers.md\">this page</a> in "
+           "the Fjord Launcher repository for a list of common API servers."
+           "<br><br>"
+           "<b>Caution!</b> Your username and password will be sent to the authentication server you specify!"),
+        url.toString());
+    if (account) {
+        accounts->addAccount(account);
+        if (accounts->count() == 1) {
+            accounts->setDefaultAccount(account);
+        }
+    }
+}
+
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
     setWindowIcon(APPLICATION->logo());
     setWindowTitle(APPLICATION->applicationDisplayName());
+    // Needed so drops of authlib-injector server links anywhere on the window are received.
+    setAcceptDrops(true);
 #ifndef QT_NO_ACCESSIBILITY
     setAccessibleName(BuildConfig.LAUNCHER_DISPLAYNAME);
 #endif
