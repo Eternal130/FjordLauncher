@@ -49,10 +49,10 @@
 
 #if defined(LAUNCHER_APPLICATION)
 #include "Application.h"
+#include "net/MirrorRedirector.h"
 #include "settings/SettingsObject.h"
 #endif
 #include "BuildConfig.h"
-#include "net/MirrorRedirector.h"
 
 #include "MMCTime.h"
 #include "StringUtils.h"

@@ -50,6 +50,11 @@ QUrl MirrorRedirector::redirect(const QUrl& url, bool enabled)
     }
 
     const QString before = url.toString();
+    // Never rewrite a URL that already points at the mirror: mirrors can redirect back to
+    // an upstream host, and re-rewriting such redirects could ping-pong forever.
+    if (url.host() == QLatin1String("bmclapi2.bangbang93.com")) {
+        return url;
+    }
     for (const auto& rule : s_mirrorRules) {
         const QString from = QLatin1String(rule.from);
         if (before.startsWith(from)) {
