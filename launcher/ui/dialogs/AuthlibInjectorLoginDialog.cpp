@@ -214,10 +214,13 @@ void AuthlibInjectorLoginDialog::onTaskStatus(const QString& status)
 }
 
 // Public interface
-MinecraftAccountPtr AuthlibInjectorLoginDialog::newAccount(QWidget* parent, QString msg)
+MinecraftAccountPtr AuthlibInjectorLoginDialog::newAccount(QWidget* parent, QString msg, QString authlibInjectorUrl)
 {
     AuthlibInjectorLoginDialog dlg(parent);
     dlg.ui->label->setText(msg);
+    if (!authlibInjectorUrl.isEmpty()) {
+        dlg.ui->authlibInjectorTextBox->setText(authlibInjectorUrl);
+    }
     if (dlg.exec() == QDialog::Accepted) {
         return dlg.m_account;
     }
