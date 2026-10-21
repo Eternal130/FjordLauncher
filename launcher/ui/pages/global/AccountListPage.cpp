@@ -48,6 +48,7 @@
 #include "ui/dialogs/ChooseOfflineNameDialog.h"
 #include "ui/dialogs/CustomMessageBox.h"
 #include "ui/dialogs/MSALoginDialog.h"
+#include "ui/dialogs/ProgressDialog.h"
 
 #include "Application.h"
 
@@ -213,6 +214,40 @@ void AccountListPage::on_actionRefresh_triggered()
     if (selection.size() > 0) {
         QModelIndex selected = selection.first();
         MinecraftAccountPtr account = selected.data(AccountList::PointerRole).value<MinecraftAccountPtr>();
+        if (account->accountType() == AccountType::AuthlibInjector && !account->isActive()) {
+            if (account->accessToken().isEmpty()) {
+                // The token was wiped after it fully expired. Yggdrasil has no refresh tokens, so the
+                // only way to recover is a full login with the account password. Try the remembered
+                // password first, then fall back to asking the user.
+                const QString storedPassword = account->loadPassword();
+                if (!storedPassword.isEmpty()) {
+                    auto task = account->login(false, storedPassword);
+                    bool loginAborted = false;
+                    connect(task.get(), &Task::aborted, [&loginAborted] { loginAborted = true; });
+                    ProgressDialog progDialog(this);
+                    progDialog.setSkipButton(true, tr("Abort"));
+                    progDialog.execWithTask(task.get());
+                    if (account->accountState() == AccountState::Online || loginAborted) {
+                        return;
+                    }
+                    // The remembered password was rejected: forget it and ask the user.
+                    account->clearPassword();
+                }
+                AuthlibInjectorLoginDialog::relogin(this, account);
+                return;
+            }
+
+            // Refresh directly instead of going through the refresh queue, which silently drops
+            // authlib-injector accounts that cannot be refreshed anymore.
+            auto task = account->refresh();
+            ProgressDialog progDialog(this);
+            progDialog.setSkipButton(true, tr("Abort"));
+            progDialog.execWithTask(task.get());
+            if (account->accountState() == AccountState::Expired) {
+                AuthlibInjectorLoginDialog::relogin(this, account);
+            }
+            return;
+        }
         m_accounts->requestRefresh(account->internalId());
     }
 }

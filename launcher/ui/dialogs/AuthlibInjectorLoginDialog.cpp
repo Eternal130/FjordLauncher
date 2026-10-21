@@ -92,6 +92,21 @@ void AuthlibInjectorLoginDialog::dropEvent(QDropEvent* event)
 void AuthlibInjectorLoginDialog::accept()
 {
     ui->errorMessage->setVisible(false);
+
+    if (m_reloginMode) {
+        // The account (and thus its authentication server URL) already exists: no confirmation and
+        // no API location lookup needed, log in again with the entered password directly.
+        setUserInputsEnabled(false);
+        ui->loadingLabel->setVisible(true);
+
+        m_loginTask = m_account->login(false, ui->passTextBox->text());
+        connect(m_loginTask.get(), &Task::failed, this, &AuthlibInjectorLoginDialog::onTaskFailed);
+        connect(m_loginTask.get(), &Task::succeeded, this, &AuthlibInjectorLoginDialog::onTaskSucceeded);
+        connect(m_loginTask.get(), &Task::status, this, &AuthlibInjectorLoginDialog::onTaskStatus);
+        m_loginTask->start();
+        return;
+    }
+
     auto fixedAuthlibInjectorUrl = AuthlibInjectorLoginDialog::fixUrl(ui->authlibInjectorTextBox->text());
 
     auto response = CustomMessageBox::selectable(this, QObject::tr("Confirm account creation"),
@@ -186,6 +201,10 @@ void AuthlibInjectorLoginDialog::onApiLocationTaskSucceeded()
 
 void AuthlibInjectorLoginDialog::onTaskSucceeded()
 {
+    if (m_account->accountType() == AccountType::AuthlibInjector) {
+        // Remember the password so the account can be recovered automatically next time its token expires.
+        m_account->savePassword(ui->passTextBox->text());
+    }
     QDialog::accept();
 }
 
@@ -203,4 +222,23 @@ MinecraftAccountPtr AuthlibInjectorLoginDialog::newAccount(QWidget* parent, QStr
         return dlg.m_account;
     }
     return nullptr;
+}
+
+bool AuthlibInjectorLoginDialog::relogin(QWidget* parent, MinecraftAccountPtr account)
+{
+    Q_ASSERT(!account->isActive());
+
+    AuthlibInjectorLoginDialog dlg(parent);
+    dlg.m_reloginMode = true;
+    dlg.m_account = account;
+    dlg.setWindowTitle(QObject::tr("Log in again"));
+    dlg.ui->label->setText(QObject::tr("The login session for %1 has expired.<br>Please enter the account's password to log in again.")
+                               .arg(account->accountDisplayString()));
+    dlg.ui->userTextBox->setText(account->accountData()->userName());
+    dlg.ui->userTextBox->setReadOnly(true);
+    // Keep the text box filled (but hidden) so the OK button logic, which checks all text boxes, keeps working.
+    dlg.ui->authlibInjectorTextBox->setText(account->authlibInjectorUrl());
+    dlg.ui->authlibInjectorTextBox->setVisible(false);
+    dlg.ui->passTextBox->setFocus();
+    return dlg.exec() == QDialog::Accepted;
 }

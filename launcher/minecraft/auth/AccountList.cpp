@@ -172,6 +172,10 @@ void AccountList::removeAccount(QModelIndex index)
     int row = index.row();
     if (index.isValid() && row >= 0 && row < m_accounts.size()) {
         auto& account = m_accounts[row];
+        if (account->accountType() == AccountType::AuthlibInjector) {
+            // Forget the password remembered for this account, if any.
+            account->clearPassword();
+        }
         if (account == m_defaultAccount) {
             m_defaultAccount = nullptr;
             onDefaultAccountChanged();
