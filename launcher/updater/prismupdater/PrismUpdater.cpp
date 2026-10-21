@@ -1155,6 +1155,13 @@ void PrismUpdaterApp::downloadReleasePage(const QString& api_url, int page)
         { "Accept", "application/vnd.github+json" },
         { "X-GitHub-Api-Version", "2022-11-28" },
     });
+    // Unauthenticated GitHub API requests are limited to 60/h per IP address, which shared
+    // proxy exit nodes exhaust quickly; a token raises the limit to 5000/h. A read-only
+    // PAT without any scopes is sufficient (https://github.com/settings/tokens).
+    const QByteArray github_token = qEnvironmentVariable("FJORDLAUNCHER_GITHUB_TOKEN").toUtf8();
+    if (!github_token.isEmpty()) {
+        github_api_headers->addHeader("Authorization", "Bearer " + github_token);
+    }
     download->addHeaderProxy(std::move(github_api_headers));
 
     connect(download.get(), &Net::Download::succeeded, this, [this, response, per_page, api_url, page]() {
