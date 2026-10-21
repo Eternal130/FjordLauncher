@@ -122,8 +122,9 @@ QString PasswordStore::load(const QString& key)
 void PasswordStore::remove(const QString& key)
 {
     QJsonObject accounts = loadStore();
-    if (accounts.remove(key) == 0) {
+    if (!accounts.contains(key)) {
         return;
     }
+    accounts.remove(key);
     saveStore(accounts);
 }
