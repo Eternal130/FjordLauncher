@@ -289,19 +289,30 @@ void MinecraftAccount::fillSession(AuthSessionPtr session)
     session->authlib_injector_metadata = data.authlibInjectorMetadata;
 }
 
+namespace {
+// The password store key must be stable across launcher restarts: internalId() is regenerated
+// on every load (it is not persisted in accounts.json), so derive the key from the persisted
+// auth server URL and user name instead. NOTE: this makes old internalId-based entries
+// unreachable; they are effectively forgotten and the user re-enters the password once.
+QString passwordStoreKey(const AccountData& data)
+{
+    return QStringLiteral("authlib/%1/%2").arg(data.customAuthlibInjectorUrl, data.userName());
+}
+}  // namespace
+
 void MinecraftAccount::savePassword(const QString& password) const
 {
-    PasswordStore::store(QStringLiteral("authlib/%1").arg(internalId()), password);
+    PasswordStore::store(passwordStoreKey(data), password);
 }
 
 QString MinecraftAccount::loadPassword() const
 {
-    return PasswordStore::load(QStringLiteral("authlib/%1").arg(internalId()));
+    return PasswordStore::load(passwordStoreKey(data));
 }
 
 void MinecraftAccount::clearPassword() const
 {
-    PasswordStore::remove(QStringLiteral("authlib/%1").arg(internalId()));
+    PasswordStore::remove(passwordStoreKey(data));
 }
 
 void MinecraftAccount::decrementUses()
